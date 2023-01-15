@@ -23,7 +23,7 @@ class HomeController extends Controller
             $content->header('首页');
             $content->description('欢迎使用');
 
-            $content->row(view('admin.title'));
+            $content->row(view('exam::title'));
 
             $content->row(function (Row $row) {
 
