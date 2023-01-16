@@ -292,8 +292,14 @@ class ExaminationSubjectController extends Controller
                 $paper->save();
                 $paperId = $paper->getKey();
                 $request->offsetSet("paper_id", $paperId);
+
                 $importer = new PaperQuestionImport();
-                $importer->handle($request, (new Response())->toastr());
+                $response = $importer->handle($request, (new Response())->toastr());
+                $options = $response->getPlugin()->getOptions();
+                if($options['toastr']['type'] != 'success'){
+                    DB::rollBack();
+                    return $this->error(["file" => ["保存失败：{$options['toastr']['content']}"]], $request->input());
+                }
             }
 
             DB::commit();

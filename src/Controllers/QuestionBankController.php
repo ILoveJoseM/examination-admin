@@ -8,7 +8,14 @@
 
 namespace JoseChan\Examination\Admin\Controllers;
 
+use Encore\Admin\Actions\Response;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\MessageBag;
 use JoseChan\Examination\Admin\Extensions\Actions\BankQuestionList;
+use JoseChan\Examination\Admin\Extensions\Form\Fields\Import;
+use JoseChan\Examination\Admin\Extensions\ImportHandler\BankQuestionImport;
 use JoseChan\Examination\DataSet\Models\QuestionBank;
 use App\Http\Controllers\Controller;
 use Encore\Admin\Controllers\HasResourceActions;
@@ -62,7 +69,7 @@ class QuestionBankController extends Controller
                 ['text' => '编辑']
             );
 
-            $content->body($this->form()->edit($id));
+            $content->body($this->updateForm()->edit($id));
         });
     }
 
@@ -85,7 +92,7 @@ class QuestionBankController extends Controller
                 ['text' => '新增']
             );
 
-            $content->body($this->form());
+            $content->body($this->createForm());
         });
     }
 
@@ -123,14 +130,79 @@ class QuestionBankController extends Controller
         });
     }
 
-    protected function form()
+    public function updateForm()
     {
         return Admin::form(QuestionBank::class, function (Form $form) {
 
             $form->display('id',"ID");
             $form->text('name',"题库名称")->rules("required|string");
             $form->select('subject_id',"所属科目")->options(Subject::getOptions());
-
         });
+    }
+
+    protected function createForm()
+    {
+        return Admin::form(QuestionBank::class, function (Form $form) {
+
+            $form->display('id',"ID");
+            $form->text('name',"题库名称")->rules("required|string");
+            $form->select('subject_id',"所属科目")->options(Subject::getOptions());
+            /** @var Import $importer */
+            $importer = $form->import("file", "导入试卷题目");
+            $url = Storage::disk("public")->url("templates/question_template.xlsx");
+            $importer->setUrl($url);
+        });
+    }
+
+    public function store(Request $request)
+    {
+        $name = $request->get("name");
+        $subjectId = $request->get("subject_id");
+
+        $bank = [
+            "name" => $name,
+            "subject_id" => $subjectId,
+        ];
+
+        try {
+            DB::beginTransaction();
+            $bankId = QuestionBank::query()->insertGetId($bank);
+            $request->offsetSet("bank_id", $bankId);
+            $importer = new BankQuestionImport();
+            $response = $importer->handle($request, (new Response())->toastr());
+            $options = $response->getPlugin()->getOptions();
+            if($options['toastr']['type'] != 'success'){
+                DB::rollBack();
+                return $this->error(["file" => ["保存失败：{$options['toastr']['content']}"]], $request->input());
+            }
+            DB::commit();
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return $this->error(["name" => ["保存失败：{$e->getMessage()}"]], $request->input());
+        }
+    }
+
+    /**
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function error($messages, $input = [])
+    {
+        $messageBag = new MessageBag($messages);
+        if (\request()->ajax() && !\request()->pjax()) {
+            return response()->json([
+                'status' => false,
+                'validation' => $messageBag,
+                'message' => $messageBag->first(),
+            ]);
+        }
+
+        return back()->withInput($input)->withErrors($messageBag);
+    }
+
+    protected function redirectAfterSaving($resourcesPath, $key = 0)
+    {
+        admin_toastr(trans('admin.save_succeeded'));
+
+        return redirect($resourcesPath);
     }
 }

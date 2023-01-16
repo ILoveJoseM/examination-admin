@@ -28,7 +28,7 @@ class ExamSubjectList implements Renderable
 
         return <<<EOT
 <a href="{$uri}" title="考试科目">
-    <i class="fa fa-book"></i>
+    考试科目
 </a>
 EOT;
     }

@@ -28,7 +28,7 @@ class BankQuestionList implements Renderable
 
         return <<<EOT
 <a href="{$uri}" title="题目列表">
-    <i class="fa fa-question"></i>
+    题目管理
 </a>
 EOT;
     }
