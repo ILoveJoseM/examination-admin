@@ -148,7 +148,7 @@ class QuestionBankController extends Controller
             $form->text('name',"题库名称")->rules("required|string");
             $form->select('subject_id',"所属科目")->options(Subject::getOptions());
             /** @var Import $importer */
-            $importer = $form->import("file", "导入试卷题目");
+            $importer = $form->import("file", "导入题库题目");
             $url = Storage::disk("public")->url("templates/question_template.xlsx");
             $importer->setUrl($url);
         });
