@@ -26,3 +26,4 @@ Route::get('/user_examination_history/{id}', 'UserExaminationSubjectRecordContro
 Route::get('/user_examination_range', 'UserExaminationRangeController@index');
 Route::get('/examination/range/{examId}', 'UserExaminationRangeController@exam');
 Route::get('/subject/range/{subjectId}', 'UserExaminationRangeController@subject');
+Route::resource('/examinees', 'ExamineeController');

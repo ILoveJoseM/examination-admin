@@ -13,9 +13,11 @@ class ImportType
 {
     const BANK_QUESTION = 1;
     const PAGER_QUESTION = 2;
+    const EXAMINEE = 3;
     protected $typeHandler = [
         self::BANK_QUESTION => BankQuestionImport::class,
-        self::PAGER_QUESTION => PaperQuestionImport::class
+        self::PAGER_QUESTION => PaperQuestionImport::class,
+        self::EXAMINEE => ExamineeImport::class
     ];
 
     /**
