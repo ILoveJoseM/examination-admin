@@ -180,6 +180,14 @@ class QuestionBankController extends Controller
             DB::rollBack();
             return $this->error(["name" => ["保存失败：{$e->getMessage()}"]], $request->input());
         }
+        $form = $this->createForm();
+        $resourcesPath = $form->resource(0);
+        return $this->redirectAfterSaving($resourcesPath);
+    }
+
+    public function update($id)
+    {
+        return $this->updateForm()->update($id);
     }
 
     /**
