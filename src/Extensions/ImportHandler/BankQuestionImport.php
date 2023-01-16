@@ -92,7 +92,9 @@ class BankQuestionImport extends AbstractHandler
             $option = [];
 
             foreach ($options as $key => $optionName) {
-                $option[$optionName] = $row[$key];
+                if(!empty($row[$key])){
+                    $option[$optionName] = $row[$key];
+                }
             }
 
             if (empty($option)) {
@@ -101,8 +103,7 @@ class BankQuestionImport extends AbstractHandler
 
             foreach ($fields as $key => $field) {
                 if (in_array($field, self::REQUIRE_FIELD) && empty($row[$key])) {
-                    $headerName = array_flip(self::HEADERS);
-                    return $response->topCenter()->warning($headerName[$field] . "不能为空");
+                    continue 2;
                 }
 
                 if ($field == self::HEADERS[self::HEADER_TYPE]) {

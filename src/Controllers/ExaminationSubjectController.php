@@ -8,6 +8,7 @@
 
 namespace JoseChan\Examination\Admin\Controllers;
 
+use Encore\Admin\Actions\Response;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -16,6 +17,7 @@ use Illuminate\Support\MessageBag;
 use JoseChan\Examination\Admin\Entities\PaperGenerate;
 use JoseChan\Examination\Admin\Extensions\Actions\PaperQuestionList;
 use JoseChan\Examination\Admin\Extensions\Form\Fields\Import;
+use JoseChan\Examination\Admin\Extensions\ImportHandler\PaperQuestionImport;
 use JoseChan\Examination\Admin\FormException;
 use JoseChan\Examination\DataSet\Models\ExaminationSubject;
 use App\Http\Controllers\Controller;
@@ -143,7 +145,7 @@ class ExaminationSubjectController extends Controller
             $form->radioButton("type", "考卷类型")
                 ->options([
                     1 => "从题库随机",
-//                    2 => "导入试卷"
+                    2 => "导入试卷"
                 ])
                 ->when(1, function (Form $form) {
                     $form->select('bank_id', "题库")->options([0 => "请先选择科目"]);
@@ -165,7 +167,7 @@ class ExaminationSubjectController extends Controller
                 ->when(2, function (Form $form) {
                     /** @var Import $importer */
                     $importer = $form->import("file", "导入试卷题目");
-                    $url = Storage::disk("public")->url("templates/question_template.xlsx");
+                    $url = Storage::disk("public")->url("templates/page_question_template.xlsx");
                     $importer->setUrl($url);
                 });
 
@@ -215,29 +217,6 @@ class ExaminationSubjectController extends Controller
             return $this->error(["type" => ["请选择试卷类型"]], $request->except("question_type"));
         }
 
-        if ($type == 1 && empty($bankId)) {
-            return $this->error(["bank_id" => ["请选择题库"]], $request->except("question_type"));
-        }
-
-        if ($type == 1 && empty($questionTypes)) {
-            return $this->error(["question_type" => ["至少有一种考试题目类型"]], $request->except("question_type"));
-        }
-
-        foreach ($questionTypes as $questionType) {
-            $scoreField = "type{$questionType}_score";
-            $numField = "type{$questionType}_num";
-
-
-            if (empty($request->get($scoreField))) {
-                return $this->error([$scoreField => ["请填写题目分值"]], $request->except("question_type"));
-            }
-
-            if (empty($request->get($numField))) {
-                return $this->error([$numField => ["请填写题目数量"]], $request->except("question_type"));
-            }
-
-        }
-
         /** @var ExaminationSubject $examinationSubject */
         $examinationSubject = ExaminationSubject::query()->newModelInstance([
             "type" => $type,
@@ -245,40 +224,78 @@ class ExaminationSubjectController extends Controller
             "subject_id" => $subjectId
         ]);
 
-        $data = [
-            "bank_id" => $bankId,
-            "type" => $type,
-            "single_score" => $request->get("type1_score", 0),
-            "single_num" => $request->get("type1_num", 0),
-            "multi_score" => $request->get("type2_num", 0),
-            "multi_num" => $request->get("type2_num", 0),
-            "judge_score" => $request->get("type3_num", 0),
-            "judge_num" => $request->get("type3_num", 0),
-        ];
+        if($type == 1){
+            if ($type == 1 && empty($bankId)) {
+                return $this->error(["bank_id" => ["请选择题库"]], $request->except("question_type"));
+            }
 
-        /** @var PaperGenerate $paperGenerate */
-        $paperGenerate = app(PaperGenerate::class, ["data" => $data]);
+            if ($type == 1 && empty($questionTypes)) {
+                return $this->error(["question_type" => ["至少有一种考试题目类型"]], $request->except("question_type"));
+            }
 
-        try {
-            $examinationSubject = $paperGenerate->getPaperQuestions($examinationSubject);
-        } catch (FormException $e) {
-            return $this->error([$e->getField() => [$e->getMessage()]], $request->except("question_type"));
+            foreach ($questionTypes as $questionType) {
+                $scoreField = "type{$questionType}_score";
+                $numField = "type{$questionType}_num";
+
+
+                if (empty($request->get($scoreField))) {
+                    return $this->error([$scoreField => ["请填写题目分值"]], $request->except("question_type"));
+                }
+
+                if (empty($request->get($numField))) {
+                    return $this->error([$numField => ["请填写题目数量"]], $request->except("question_type"));
+                }
+
+            }
+
+            $data = [
+                "bank_id" => $bankId,
+                "type" => $type,
+                "single_score" => $request->get("type1_score", 0),
+                "single_num" => $request->get("type1_num", 0),
+                "multi_score" => $request->get("type2_num", 0),
+                "multi_num" => $request->get("type2_num", 0),
+                "judge_score" => $request->get("type3_num", 0),
+                "judge_num" => $request->get("type3_num", 0),
+            ];
+
+            /** @var PaperGenerate $paperGenerate */
+            $paperGenerate = app(PaperGenerate::class, ["data" => $data]);
+
+            try {
+                $examinationSubject = $paperGenerate->getPaperQuestions($examinationSubject);
+            } catch (FormException $e) {
+                return $this->error([$e->getField() => [$e->getMessage()]], $request->except("question_type"));
+            }
         }
 
         try {
             DB::beginTransaction();
             $examinationSubject->save();
-            /** @var Paper $paper */
-            $paper = $examinationSubject->getRelation('paper');
-            $paper->setAttribute($examinationSubject->paper()->getForeignKeyName(), $examinationSubject->paper()->getParentKey());
-            $paper->save();
-            /** @var Collection $questions */
-            $questions = $paper->getRelation("question");
-            $questions = $questions->map(function (PaperQuestion $question) use ($paper) {
-                $question->setAttribute($paper->question()->getForeignKeyName(), $paper->question()->getParentKey());
-                return $question;
-            });
-            PaperQuestion::query()->insert($questions->toArray());
+
+            if($type == 1){
+                /** @var Paper $paper */
+                $paper = $examinationSubject->getRelation('paper');
+                $paper->setAttribute($examinationSubject->paper()->getForeignKeyName(), $examinationSubject->paper()->getParentKey());
+                $paper->save();
+                /** @var Collection $questions */
+                $questions = $paper->getRelation("question");
+                $questions = $questions->map(function (PaperQuestion $question) use ($paper) {
+                    $question->setAttribute($paper->question()->getForeignKeyName(), $paper->question()->getParentKey());
+                    return $question;
+                });
+                PaperQuestion::query()->insert($questions->toArray());
+            } else {
+                /** @var Paper $paper */
+                $paper = Paper::query()->newModelInstance([]);
+                $paper->setAttribute($examinationSubject->paper()->getForeignKeyName(), $examinationSubject->paper()->getParentKey());
+                $paper->save();
+                $paperId = $paper->getKey();
+                $request->offsetSet("paper_id", $paperId);
+                $importer = new PaperQuestionImport();
+                $importer->handle($request, (new Response())->toastr());
+            }
+
             DB::commit();
         } catch (\Exception $e) {
             DB::rollBack();
