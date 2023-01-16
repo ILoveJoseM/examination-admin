@@ -31,7 +31,7 @@ class HomeController extends Controller
                     $column->append(view("exam::enter", [
                         "fa" => "fa-book",
                         "title" => "我的成绩",
-                        "url" => "/admin/user_examination_histories",
+                        "url" => env("APP_URL") . "/admin/user_examination_histories",
                     ]));
                 });
 
@@ -39,7 +39,7 @@ class HomeController extends Controller
                     $column->append(view("exam::enter", [
                         "fa" => "fa-hourglass-start",
                         "title" => "开始考试",
-                        "url" => "/admin/user/examinations",
+                        "url" => env("APP_URL") . "/admin/user/examinations",
                     ]));
                 });
 
@@ -47,7 +47,7 @@ class HomeController extends Controller
                     $column->append(view("exam::enter", [
                         "fa" => "fa-align-left",
                         "title" => "考试排名",
-                        "url" => "/admin/user_examination_range",
+                        "url" => env("APP_URL") . "/admin/user_examination_range",
                     ]));
                 });
             });
