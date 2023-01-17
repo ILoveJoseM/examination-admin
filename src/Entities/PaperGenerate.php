@@ -63,15 +63,13 @@ class PaperGenerate extends Entity
         }
 
         if (!empty($this->multi_num) && $this->multi_num > 0) {
-            $paperQuestions = array_merge(
-                $paperQuestions,
+            $paperQuestions = $paperQuestions->merge(
                 $this->generate(Question::TYPE_SINGLE, $this->multi_num, $this->multi_score)
             );
         }
 
         if (!empty($this->judge_num) && $this->judge_num > 0) {
-            $paperQuestions = array_merge(
-                $paperQuestions,
+            $paperQuestions = $paperQuestions->merge(
                 $this->generate(Question::TYPE_SINGLE, $this->judge_num, $this->judge_score)
             );
         }
