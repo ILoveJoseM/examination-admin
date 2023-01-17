@@ -32,12 +32,13 @@ class UserExamStartController extends Controller
             ->where("status", "=", 0)
             ->first();
 
-        /** @var ExaminationSubject $examinationSubject */
-        $examinationSubject = ExaminationSubject::query()->where("id", $examination_subject_id)->first();
+//        /** @var ExaminationSubject $examinationSubject */
+//        $examinationSubject = ExaminationSubject::query()->where("id", $examination_subject_id)->first();
 
         if (empty($userExaminationSubject)) {
             UserExaminationSubject::query()->insert([
                 "uid" => $uid,
+                "answers" => "",
                 "examination_subject_id" => $examination_subject_id,
             ]);
         }
