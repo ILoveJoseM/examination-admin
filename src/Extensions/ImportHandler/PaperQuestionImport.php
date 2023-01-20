@@ -9,6 +9,7 @@
 namespace JoseChan\Examination\Admin\Extensions\ImportHandler;
 
 
+use Carbon\Carbon;
 use Encore\Admin\Actions\Response;
 use Illuminate\Contracts\Filesystem\FileNotFoundException;
 use Illuminate\Http\Request;
@@ -88,9 +89,13 @@ class PaperQuestionImport extends AbstractHandler
         }
 
         $questions = [];
+        $time = new Carbon();
+
         foreach ($bodies as $row) {
             $fillable = [
-                "paper_id" => $paper_id
+                "paper_id" => $paper_id,
+                "created_at" => $time,
+                "updated_at" => $time,
             ];
             $option = [];
 

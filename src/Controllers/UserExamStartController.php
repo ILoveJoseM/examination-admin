@@ -36,11 +36,11 @@ class UserExamStartController extends Controller
 //        $examinationSubject = ExaminationSubject::query()->where("id", $examination_subject_id)->first();
 
         if (empty($userExaminationSubject)) {
-            UserExaminationSubject::query()->insert([
+            UserExaminationSubject::query()->newModelInstance([
                 "uid" => $uid,
                 "answers" => "",
                 "examination_subject_id" => $examination_subject_id,
-            ]);
+            ])->save();
         }
 
         return Admin::content(function (Content $content) use ($examination_subject_id) {

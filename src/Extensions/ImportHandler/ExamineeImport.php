@@ -9,6 +9,7 @@
 namespace JoseChan\Examination\Admin\Extensions\ImportHandler;
 
 
+use Carbon\Carbon;
 use Encore\Admin\Actions\Response;
 use Encore\Admin\Auth\Database\Role;
 use Illuminate\Contracts\Filesystem\FileNotFoundException;
@@ -65,10 +66,15 @@ class ExamineeImport extends AbstractHandler
 
             return $response->topCenter()->warning("导入失败，模版格式不正确");
         }
+        $time = new Carbon();
+
 
         $users = [];
         foreach ($bodies as $row) {
-            $fillable = [];
+            $fillable = [
+                "created_at" => $time,
+                "updated_at" => $time,
+            ];
 
             foreach ($fields as $key => $field) {
                 if (in_array($field, self::REQUIRE_FIELD) && empty($row[$key])) {

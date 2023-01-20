@@ -9,6 +9,7 @@
 namespace JoseChan\Examination\Admin\Extensions\ImportHandler;
 
 
+use Carbon\Carbon;
 use Encore\Admin\Actions\Response;
 use Illuminate\Contracts\Filesystem\FileNotFoundException;
 use Illuminate\Http\Request;
@@ -46,6 +47,11 @@ class BankQuestionImport extends AbstractHandler
         $file = $request->file('file');
 
         $bank_id = $request->get("bank_id");
+        if(empty($file)){
+            return $response->topCenter()->success("导入成功")->refresh();
+        }
+        $time = new Carbon();
+
         try {
             $content = $file->get();
         } catch (FileNotFoundException $e) {
@@ -87,7 +93,9 @@ class BankQuestionImport extends AbstractHandler
         $questions = [];
         foreach ($bodies as $row) {
             $fillable = [
-                "question_bank_id" => $bank_id
+                "question_bank_id" => $bank_id,
+                "created_at" => $time,
+                "updated_at" => $time,
             ];
             $option = [];
 

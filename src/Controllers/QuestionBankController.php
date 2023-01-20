@@ -8,6 +8,7 @@
 
 namespace JoseChan\Examination\Admin\Controllers;
 
+use Carbon\Carbon;
 use Encore\Admin\Actions\Response;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -158,10 +159,13 @@ class QuestionBankController extends Controller
     {
         $name = $request->get("name");
         $subjectId = $request->get("subject_id");
+        $time = new Carbon();
 
         $bank = [
             "name" => $name,
             "subject_id" => $subjectId,
+            "created_at" => $time,
+            "updated_at" => $time,
         ];
 
         try {

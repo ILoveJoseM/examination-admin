@@ -34,7 +34,7 @@
 <script>
     var seconds = 5;
     var redirect = function () {
-        location.href = "/admin/user_examination_history";
+        location.href = {{url("/admin/user_examination_histories")}};
     }
     let interval = setInterval(function () {
         if(seconds <= 0){
