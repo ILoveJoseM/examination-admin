@@ -282,7 +282,8 @@ class ExaminationSubjectController extends Controller
                 $questions = $paper->getRelation("question");
                 $questions = $questions->map(function (PaperQuestion $question) use ($paper) {
                     $question->setAttribute($paper->question()->getForeignKeyName(), $paper->question()->getParentKey());
-                    return $question;
+                    $question->syncOriginal();
+                    return $question->getOriginal();
                 });
                 PaperQuestion::query()->insert($questions->toArray());
             } else {
