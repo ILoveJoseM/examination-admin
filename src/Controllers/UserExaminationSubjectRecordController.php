@@ -75,7 +75,7 @@ class UserExaminationSubjectRecordController extends Controller
                 $action->disableDelete();
                 $action->disableView();
                 $action->disableEdit();
-                $action->append(new ExamResult($action->getResource(), $action->getKey()));
+                $action->append(new ExamResult($action->getResource(), $action->getKey(), $action->row->status));
             });
 
             $grid->disableExport();
