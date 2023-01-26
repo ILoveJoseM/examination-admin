@@ -10,8 +10,10 @@ namespace JoseChan\Examination\Admin\Providers;
 
 use Encore\Admin\Admin;
 use Encore\Admin\Form;
+use Illuminate\Console\Application;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Foundation\Support\Providers\RouteServiceProvider;
+use JoseChan\Examination\Admin\Commands\ExaminationInstaller;
 use JoseChan\Examination\Admin\Extensions\Bootings\ImportBooting;
 use JoseChan\Examination\Admin\Extensions\Form\Fields\Import;
 
@@ -26,6 +28,13 @@ class ExaminationServiceProvider extends RouteServiceProvider
     protected $namespace = "JoseChan\Examination\Admin\Controllers";
 
     /**
+     * @var array
+     */
+    protected $commands = [
+        ExaminationInstaller::class
+    ];
+
+    /**
      * 初始化
      */
     public function boot()
@@ -33,6 +42,7 @@ class ExaminationServiceProvider extends RouteServiceProvider
         $this->loadViewsFrom(__DIR__.'/../../resources/views', 'exam');
         $this->publishes([__DIR__ . '/../../templates' => public_path("templates")], "examination-admin");
         $this->bootingImporter();
+        $this->commands($this->commands);
         parent::boot();
     }
 
