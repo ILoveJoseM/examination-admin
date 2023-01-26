@@ -109,7 +109,7 @@ class UserExaminationRangeController extends Controller
                 $actions->disableEdit();
                 $actions->disableDelete();
                 $actions->append(new ExamRange($actions->getResource(), $actions->row->examination->id));
-                $actions->append(new SubjectRange($actions->getResource(), $actions->row->subject->id));
+                $actions->append(new SubjectRange($actions->getResource(), $actions->row->id));
             });
 
             //允许筛选的项
@@ -156,7 +156,7 @@ class UserExaminationRangeController extends Controller
                 $grid->disablePagination();
                 $grid->paginate(100);
                 $grid->model()
-                    ->where("examination_subject_id", $examSubjectIds)
+                    ->whereIn("examination_subject_id", $examSubjectIds)
                     ->groupBy("uid")
                     ->orderByDesc("score")
                     ->selectRaw("uid, sum(score) as score");
@@ -181,21 +181,17 @@ class UserExaminationRangeController extends Controller
 
     }
 
-    public function subject($subjectId)
+    public function subject($examSubjectId)
     {
-        return Admin::content(function (Content $content) use ($subjectId) {
+        return Admin::content(function (Content $content) use ($examSubjectId) {
 
-            /** @var Examination $exam */
-            $exam = Subject::query()
-                ->where("id", "=", $subjectId)
-                ->first();
-            /** @var ExaminationSubject|Collection $examSubject */
+            /** @var ExaminationSubject $examSubject */
             $examSubject = ExaminationSubject::query()
-                ->where("subject_id", "=", $subjectId)
-                ->get(["id"]);
-            $examSubjectIds = $examSubject->pluck("id")->toArray();
+                ->with(["examination", "subject"])
+                ->where("id", "=", $examSubjectId)
+                ->first();
             //页面描述
-            $content->header($exam->name . "考试成绩");
+            $content->header($examSubject->examination->name . "-" . $examSubject->subject->name . "科 考试成绩");
             //小标题
             $content->description('考试成绩排名');
 
@@ -205,10 +201,10 @@ class UserExaminationRangeController extends Controller
                 ['text' => '考试成绩排名', 'url' => '/examination']
             );
 
-            $content->body(Admin::grid(UserExaminationSubject::class, function (Grid $grid) use ($examSubjectIds) {
+            $content->body(Admin::grid(UserExaminationSubject::class, function (Grid $grid) use ($examSubjectId) {
                 $grid->disablePagination();
                 $grid->paginate(100);
-                $grid->model()->where("examination_subject_id", $examSubjectIds)->orderByDesc("score");
+                $grid->model()->where("examination_subject_id", $examSubjectId)->orderByDesc("score");
                 $grid->column("排名")->display(function () {
                     self::$sort ++;
                     return self::$sort;
